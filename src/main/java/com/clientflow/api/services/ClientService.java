@@ -3,6 +3,8 @@ package com.clientflow.api.services;
 import com.clientflow.api.dto.ClientDTO;
 import com.clientflow.api.entities.Client;
 import com.clientflow.api.repositories.ClientRepository;
+import com.clientflow.api.services.exceptions.ResourceNotFoundException;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -17,7 +19,7 @@ public class ClientService {
 
     @Transactional(readOnly = true)
     public ClientDTO findById(Long id) {
-        Client client = repository.findById(id).get();
+        Client client = repository.findById(id).orElseThrow(()  -> new ResourceNotFoundException("Recurso não encontrado"));
         return new ClientDTO(client);
     }
 
@@ -37,7 +39,8 @@ public class ClientService {
 
     @Transactional
     public ClientDTO update(Long id, ClientDTO dto) {
-        Client entity = repository.findById(id).get();
+        Client entity = repository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Recurso não encontrado"));
         copyDtoToEntity(dto, entity);
         entity = repository.save(entity);
         return new ClientDTO(entity);
@@ -45,6 +48,9 @@ public class ClientService {
 
     @Transactional
     public void delete(Long id) {
+        if (!repository.existsById(id)) {
+            throw new ResourceNotFoundException("Recurso não encontrado");
+        }
         repository.deleteById(id);
     }
 
